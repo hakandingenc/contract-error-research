@@ -33,7 +33,7 @@
                          (term (n ...)))])
 
 ; Reduction relation
-(define λ/c-red
+(define λe+c-red
   (reduction-relation
    λe+c
    #:domain e
@@ -69,12 +69,12 @@
     (-->> a1 a2)]))
 
 ; Reduction tests
-(test-->> λ/c-red
+(test-->> λe+c-red
           (term ((mon (-> (flat (λ x (> x 0)))
                           (flat (λ x (> x 0))))
                       (λ x (* 2 (+ x 5)))) 10))
           (term 30))
-(test-->> λ/c-red
+(test-->> λe+c-red
           (term ((mon (->
                        (-> (flat (λ x (> x 0)))
                            (flat (λ x (< x 0))))
@@ -82,7 +82,7 @@
                       (λ f (f 10)))
                  (λ x (* -1 x))))
           (term error))
-(test-->> λ/c-red
+(test-->> λe+c-red
           (term (((mon (->
                         (-> (flat (λ x (> x 0)))
                             (flat (λ x (> x 0))))
