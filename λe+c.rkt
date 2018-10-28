@@ -1,5 +1,7 @@
 #lang racket
 
+; [*] indicates changes made as a result of property testing
+
 ; Racket namespace used for `eval`uating primitive operators
 (define-namespace-anchor anchor)
 (define racket-namespace (namespace-anchor->namespace anchor))
@@ -9,7 +11,9 @@
 
 ; Language definition
 (define-language λe+c
-  [e  x v (e e) (if e e e) (p e ...) (mon c e)]
+  ; (p e e e ...) is needed to avoid contract errors for primitive functions
+  ; as they all need at least 2 arguments. [*]
+  [e  x v (e e) (if e e e) (p e e e ...) (mon c e)]
   [n  number]
   [b  boolean]
   [p  + * > <]
@@ -52,10 +56,16 @@
          "β")
    (-->> (mon (flat v_1) v_2)
          (if (v_1 v_2) v_2 error)
-         "mon-first")
+         "mon-first"
+         ; Prevent reducing monitors with error [*]
+         (side-condition (not (equal? (term v_2)
+                                      (term error)))))
    (-->> (mon (-> c_1 c_2) v)
          (λ x (mon c_2 (v (mon c_1 x))))
-         "mon-higher")
+         "mon-higher"
+         ; Prevent reducing monitors with error [*]
+         (side-condition (not (equal? (term v)
+                                      (term error)))))
    ; Reduction relation for discarding a context with `error`
    (--> (in-hole E error)
         error
@@ -92,3 +102,8 @@
                   (λ x (* 2 x)))
                  10))
           20)
+
+(redex-check λe+c
+             e
+             (= (length (apply-reduction-relation* λe+c-red (term e))) 1)
+             #:attempts 100000)
